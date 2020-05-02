@@ -5,7 +5,7 @@ exports.handler = async function(context, event, callback) {
 
   const errorHandler    = function(err) {
     response.setBody(err);
-    callback(err, null);
+    callback(response, null);
     process.exit(1);
   };
 
@@ -99,5 +99,5 @@ exports.handler = async function(context, event, callback) {
     .catch(errorHandler)
 
   response.setBody({success: true});
-  callback(null, {success: true});
+  callback(null, response);
 }
