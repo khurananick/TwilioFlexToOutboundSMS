@@ -1,5 +1,5 @@
 exports.handler = async function(context, event, callback) {
-  const response        = new Twilio.Response();
+  const response = new Twilio.Response();
   response.appendHeader('Content-Type', 'application/json');
   response.appendHeader('Access-Control-Allow-Origin', '*');
 
@@ -9,9 +9,13 @@ exports.handler = async function(context, event, callback) {
     process.exit(1);
   };
 
-  const client          = require("twilio")(process.env.TWILIO_FLEX_ACCOUNT_SID, process.env.TWILIO_FLEX_AUTH_TOKEN);
   const contactName     = event.ToName;
   const contactNumber   = event.ToNumber;
+  
+  if(!contactName || !contactNumber)
+    errorHandler({error: "ToName and ToNumber are required parameters."});
+
+  const client          = context.getTwilioClient();
   const flexPhoneNum    = context.TWILIO_FLEX_PHONE_NUMBER;
   const workspaceSid    = context.TWILIO_WORKSPACE_SID;
   const workflowSid     = context.TWILIO_FLEX_WORKFLOW_SID;
