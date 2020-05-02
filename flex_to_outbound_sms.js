@@ -9,22 +9,33 @@ exports.handler = async function(context, event, callback) {
   const chatServiceSid  = context.TWILIO_FLEX_CHAT_SERVICE_SID;
   const proxyServiceSid = context.TWILIO_FLEX_PROXY_SERVICE_SID;
 
-  const flexFlow = await client.flexApi.flexFlow
-    .create({
-       enabled: false,
-       contactIdentity: flexPhoneNum,
-       integrationType: 'task',
-       'integration.workspaceSid': workspaceSid,
-       'integration.workflowSid': workflowSid,
-       'integration.channel': smsChannelSid,
-       friendlyName: 'OutboundSMS',
-       chatServiceSid: chatServiceSid,
-       channelType: 'sms',
-       longLived: true,
-       janitorEnabled: true
-     })
-    .catch(function(err) { console.log(err); })
+  // find if OutboundSMS flow exists.
+  let flexFlow;
+  const flexFlows = await client.flexApi.flexFlow.list();
+  for(let flow of flexFlows) {
+    if(flow.friendlyName == "OutboundSMS")
+      // fetch if true
+      flexFlow = await client.flexApi.flexFlow(flow.sid).fetch()
 
+  // create flow if not exists.
+  if(!flexFlow)
+    flexFlow = await client.flexApi.flexFlow
+      .create({
+         enabled: false,
+         contactIdentity: flexPhoneNum,
+         integrationType: 'task',
+         'integration.workspaceSid': workspaceSid,
+         'integration.workflowSid': workflowSid,
+         'integration.channel': smsChannelSid,
+         friendlyName: 'OutboundSMS',
+         chatServiceSid: chatServiceSid,
+         channelType: 'sms',
+         longLived: true,
+         janitorEnabled: true
+       })
+      .catch(function(err) { console.log(err); })
+
+  // create a channel for this outbound number
   const newChannel = await client.flexApi.channel
     .create({
        target: contactNumber,
@@ -46,10 +57,11 @@ exports.handler = async function(context, event, callback) {
   /* re-use long-lived sessions. */
   const proxySessions = await client.proxy.services(proxyServiceSid).sessions.list();
   if(proxySessions)
-    for(session of proxySessions)
+    for(let session of proxySessions)
       if(session.uniqueName == newChannel.sid)
         return callback(null, {success: true})
 
+  // if no proxy session exists, create one and assign users to it
   const proxySession = await client.proxy.services(proxyServiceSid)
     .sessions
     .create({
