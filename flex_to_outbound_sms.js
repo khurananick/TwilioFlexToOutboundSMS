@@ -12,10 +12,9 @@ exports.handler = async function(context, event, callback) {
   // find if OutboundSMS flow exists.
   let flexFlow;
   const flexFlows = await client.flexApi.flexFlow.list();
-  for(let flow of flexFlows) {
+  for(let flow of flexFlows)
     if(flow.friendlyName == "OutboundSMS")
-      // fetch if true
-      flexFlow = await client.flexApi.flexFlow(flow.sid).fetch()
+      flexFlow = await client.flexApi.flexFlow(flow.sid).fetch() // fetch if true
 
   // create flow if not exists.
   if(!flexFlow)
