@@ -46,13 +46,13 @@ exports.handler = async function(context, event, callback) {
          friendlyName: newFlowName,
          chatServiceSid: chatServiceSid,
          channelType: 'sms',
-         longLived: true,
+         longLived: false,
          janitorEnabled: true
        })
       .catch(errorHandler)
 
   // create a channel for this outbound number
-  const newChannel = await client.flexApi.channel
+  let newChannel = await client.flexApi.channel
     .create({
        target: contactNumber,
        taskAttributes: JSON.stringify({
@@ -66,7 +66,9 @@ exports.handler = async function(context, event, callback) {
        identity: `sms${contactNumber}`,
        chatFriendlyName: `Outbound Chat with ${contactName}`,
        flexFlowSid: flexFlow.sid,
-       chatUserFriendlyName: contactName
+       chatUserFriendlyName: contactName,
+       uniqueName: (new Date().getTime()),
+       longLived: false
      })
     .catch(errorHandler)
 
@@ -100,6 +102,14 @@ exports.handler = async function(context, event, callback) {
     .participants
     .create({friendlyName: contactName, identifier: contactNumber, proxyIdentifier: flexPhoneNum})
     .catch(errorHandler)
+
+  // update the newly created task channel with the proxy session sid
+  // so that the proxy session is killed on task end action
+  newChannel = await client.chat.services(chatServiceSid).channels(newChannel.sid).fetch();
+  const channelAttributes = Object.assign(JSON.parse(newChannel.attributes), {proxySession: proxySession.sid});
+  const updateResp = await client.chat.services(chatServiceSid).channels(newChannel.sid).update({
+    attributes: JSON.stringify(channelAttributes)
+  });
 
   response.setBody({success: true});
   callback(null, response);
