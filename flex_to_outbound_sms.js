@@ -30,7 +30,7 @@ exports.handler = async function(context, event, callback) {
   let flexFlow;
   const flexFlows = await client.flexApi.flexFlow.list();
   for(let flow of flexFlows)
-    if(flow.friendlyName == "newFlowName")
+    if(flow.friendlyName == newFlowName)
       flexFlow = await client.flexApi.flexFlow(flow.sid).fetch() // fetch if true
 
   // create flow if not exists.
