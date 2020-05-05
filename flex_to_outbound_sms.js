@@ -11,23 +11,26 @@ exports.handler = async function(context, event, callback) {
 
   const contactName     = event.ToName;
   const contactNumber   = event.ToNumber;
-  
+  const targetWorker    = event.TargetWorker;
+
   if(!contactName || !contactNumber)
     errorHandler({error: "ToName and ToNumber are required parameters."});
 
-  const client          = context.getTwilioClient();
+
+  const client          = require("twilio")(context.TWILIO_FLEX_ACCOUNT_SID, context.TWILIO_FLEX_AUTH_TOKEN);
   const flexPhoneNum    = context.TWILIO_FLEX_PHONE_NUMBER;
-  const workspaceSid    = context.TWILIO_WORKSPACE_SID;
-  const workflowSid     = context.TWILIO_FLEX_WORKFLOW_SID;
+  const workspaceSid    = context.TWILIO_FLEX_WORKSPACE_SID;
+  const workflowSid     = context.TWILIO_FLEX_OUTBOUND_WORKFLOW_SID;
   const smsChannelSid   = context.TWILIO_FLEX_SMS_CHANNEL_SID;
   const chatServiceSid  = context.TWILIO_FLEX_CHAT_SERVICE_SID;
   const proxyServiceSid = context.TWILIO_FLEX_PROXY_SERVICE_SID;
+  const newFlowName     = "Outbound SMS";
 
-  // find if OutboundSMS flow exists.
+  // find if {{newFlowName}} flow exists.
   let flexFlow;
   const flexFlows = await client.flexApi.flexFlow.list();
   for(let flow of flexFlows)
-    if(flow.friendlyName == "OutboundSMS")
+    if(flow.friendlyName == "newFlowName")
       flexFlow = await client.flexApi.flexFlow(flow.sid).fetch() // fetch if true
 
   // create flow if not exists.
@@ -40,7 +43,7 @@ exports.handler = async function(context, event, callback) {
          'integration.workspaceSid': workspaceSid,
          'integration.workflowSid': workflowSid,
          'integration.channel': smsChannelSid,
-         friendlyName: 'OutboundSMS',
+         friendlyName: newFlowName,
          chatServiceSid: chatServiceSid,
          channelType: 'sms',
          longLived: true,
@@ -57,8 +60,8 @@ exports.handler = async function(context, event, callback) {
          direction: 'outbound',
          name: contactName,
          from: flexPhoneNum,
-         targetWorker: 'client:nkhurana',
-         autoAnswer: 'true'
+         targetWorker: targetWorker,
+         autoAnswer: true
        }),
        identity: `sms${contactNumber}`,
        chatFriendlyName: `Outbound Chat with ${contactName}`,
