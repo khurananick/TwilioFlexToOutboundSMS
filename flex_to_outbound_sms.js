@@ -5,7 +5,7 @@ exports.handler = async function(context, event, callback) {
 
   const errorHandler    = function(err) {
     response.setBody(err);
-    callback(response, null);
+    callback(null, response);
     process.exit(1);
   };
 
@@ -60,7 +60,7 @@ exports.handler = async function(context, event, callback) {
          direction: 'outbound',
          name: contactName,
          from: flexPhoneNum,
-         targetWorker: targetWorker,
+         workerUri: targetWorker,
          autoAnswer: true
        }),
        identity: `sms${contactNumber}`,
