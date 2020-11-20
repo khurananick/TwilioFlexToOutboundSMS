@@ -1,0 +1,91 @@
+{
+  "description": "A New Flow",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "event": "incomingMessage"
+        },
+        {
+          "event": "incomingCall"
+        },
+        {
+          "next": "send_and_reply_1",
+          "event": "incomingRequest"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "name": "send_and_reply_1",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "function_1",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 190,
+          "y": 220
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Please say yes or now.",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "function_1",
+      "type": "run-function",
+      "transitions": [
+        {
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 100,
+          "y": 460
+        },
+        "parameters": [
+          {
+            "value": "{{flow.channel.address}}",
+            "key": "ToName"
+          },
+          {
+            "value": "{{flow.channel.address}}",
+            "key": "ToNumber"
+          },
+          {
+            "value": "{{widgets.send_and_reply_1 | to_json}}",
+            "key": "Messages"
+          }
+        ],
+        "url": "https://tumbleweed-birman-3704.twil.io/rest-api-to-outbound-flex"
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}
